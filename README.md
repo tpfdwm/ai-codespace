@@ -55,31 +55,45 @@ claude
 
 ### 免费环境清单
 
-| 平台 | 算力 | 装 Claude Code | 重开实例后 | 本地 VSCode 连法 |
-|------|------|---------------|-----------|------------------|
-| **GitHub Codespaces** | CPU 免费 | devcontainer 自动 | 全部保留，直接 `claude` | Codespaces 扩展 / 浏览器 |
-| **魔搭 ModelScope** | 免费 GPU | 持久盘装(见下) | `source /mnt/workspace/start-claude.sh && claude` | `tunnel.sh` |
-| **阿里云 PAI-DSW** | GPU 试用 | 同 ModelScope(`/mnt/workspace`) | 同上 | 控制台自带 / `tunnel.sh` |
-| **腾讯 Cloud Studio** | CPU 免费 | `bash setup-claude.sh` | 工作空间持久，重开即用 | 自带 Web IDE / Remote-SSH |
-| **百度 AI Studio** | 免费 GPU | ⚠️ 无可用交互终端，跑不了 `claude` | — | 不推荐 |
+| 平台 | 算力 | 怎么用 Claude Code | 重开后 |
+|------|------|-------------------|--------|
+| **GitHub Codespaces** | CPU 免费 | devcontainer 自动装，网页 VSCode | 全保留，直接 `claude` |
+| **魔搭 ModelScope** | 免费 GPU | 网页 JupyterLab 终端，内联装到持久盘 `/mnt/workspace` | `source /mnt/workspace/start-claude.sh && claude` |
+| **腾讯 Cloud Studio** | CPU 免费 | 网页 IDE 终端，`bash setup-claude.sh` | 工作空间持久，重开即用 |
 
-> 提醒：Claude Code 本身**不吃 GPU**，只想用它就挑 CPU 免费的（Codespaces / Cloud Studio）；GPU 留给真正跑 / 微调模型时再开。
+> Claude Code 本身**不吃 GPU**，只想用它就挑 CPU 免费的（Codespaces / Cloud Studio）；免费 GPU（ModelScope）留着真正跑 / 微调模型时顺带用。
 
-### 关键：持久化（ModelScope / PAI-DSW 必看）
+### 魔搭 ModelScope（网页终端，内联安装，免 git clone）
 
-这类实例**只有数据盘 `/mnt/workspace` 重开后还在**，家目录、`~/.bashrc`、`npm -g` 装的包都会被清空。
-所以必须把东西装进 `/mnt/workspace`，否则每次重开都要重装。
+ModelScope 免费实例**只有数据盘 `/mnt/workspace` 重开后还在**，家目录和 `~/.bashrc` 会被清空；
+而且仓库 clone 经常拉不下来。所以这里**不 clone**，直接把整段贴进网页 JupyterLab 终端
+（Launcher → Other → Terminal），一次性装到持久盘：
 
-**① 只做一次**（首次需要 clone 仓库拿到脚本；装完仓库就可以不要了）：
+**① 只做一次**（把第一行令牌换成你的）：
 
 ```bash
-git clone https://github.com/tpf308/ai-codespace.git && cd ai-codespace
-export PERSIST_DIR=/mnt/workspace          # 关键：装到持久盘
-export ANTHROPIC_AUTH_TOKEN="你的第三方令牌"
-bash setup-claude.sh
+export ANTHROPIC_AUTH_TOKEN="你的令牌"
+ROOT=/mnt/workspace
+curl -fsSL https://registry.npmmirror.com/-/binary/node/v20.18.0/node-v20.18.0-linux-x64.tar.gz -o /tmp/node.tar.gz
+mkdir -p $ROOT/node && tar -xzf /tmp/node.tar.gz -C $ROOT/node --strip-components=1
+export PATH="$ROOT/node/bin:$ROOT/npm-global/bin:$PATH"
+npm config set registry https://registry.npmmirror.com
+npm config set prefix $ROOT/npm-global
+npm install -g @anthropic-ai/claude-code
+mkdir -p $ROOT/claude-config
+cat > $ROOT/claude-config/settings.json <<'JSON'
+{ "permissions": { "defaultMode": "bypassPermissions" }, "skipDangerousModePermissionPrompt": true, "theme": "dark", "effortLevel": "xhigh" }
+JSON
+cat > $ROOT/start-claude.sh <<EOF
+export PATH="$ROOT/node/bin:$ROOT/npm-global/bin:\$PATH"
+export ANTHROPIC_BASE_URL="https://cc.freemodel.dev"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-8"
+export ANTHROPIC_AUTH_TOKEN="$ANTHROPIC_AUTH_TOKEN"
+export IS_SANDBOX=1
+mkdir -p \$HOME/.claude && cp $ROOT/claude-config/settings.json \$HOME/.claude/settings.json
+EOF
+source $ROOT/start-claude.sh && claude
 ```
-
-脚本会把 Node + Claude Code + 默认设置全装进 `/mnt/workspace`，并生成 `/mnt/workspace/start-claude.sh`（令牌已写进去）。
 
 **② 以后每次重开 notebook**，只跑这一行（不下载、不安装，瞬间进）：
 
@@ -87,31 +101,23 @@ bash setup-claude.sh
 source /mnt/workspace/start-claude.sh && claude
 ```
 
-### 家目录持久的平台（Codespaces / Cloud Studio）
+> 先 `ls /mnt/workspace` 确认目录在；万一你实例的持久盘不叫这个名，把上面所有 `/mnt/workspace`（即 `ROOT`）换成那个"重开还在"的目录。
 
-这些环境家目录本身不丢，直接用默认（家目录）模式即可，新终端会自动加载：
+### 腾讯 Cloud Studio（CPU，家目录持久）
+
+家目录本身不丢，用脚本默认（家目录）模式即可，新终端会自动加载：
 
 ```bash
 git clone https://github.com/tpf308/ai-codespace.git && cd ai-codespace
-export ANTHROPIC_AUTH_TOKEN="你的第三方令牌"
+export ANTHROPIC_AUTH_TOKEN="你的令牌"
 bash setup-claude.sh
 source ~/.bashrc && claude
 ```
 
-> GitHub clone 慢的话换国内镜像：`git clone https://gitclone.com/github.com/tpf308/ai-codespace.git`
+> clone 慢 / 失败就换镜像：`git clone https://gitclone.com/github.com/tpf308/ai-codespace.git`；
+> 还不行就照搬上面 ModelScope 那段内联命令，把 `ROOT=/mnt/workspace` 改成 `ROOT=$HOME/.local` 即可。
 
-### 在本地 VSCode 里连云端（VS Code 隧道）
-
-这些 Notebook 不给公网 SSH，用 `tunnel.sh` 起一条 VS Code 隧道，即可让本地 VSCode 连进来（免公网 SSH、穿防火墙）：
-
-```bash
-bash tunnel.sh          # 前台，按提示用 GitHub 账号授权
-# 或后台常驻：bash tunnel.sh -d  然后 cat ~/tunnel.log 看授权链接
-```
-
-本地 VSCode 装 **`Remote - Tunnels`** 扩展 → `F1` → `Remote Tunnels: Connect to Tunnel` → 用同一个 GitHub 账号登录、选中隧道。
-
-> Gitpod 已改版为付费的 **Ona** 平台（主推自带 agent），不再适合免费跑 Claude Code；CPU 云 IDE 用 **GitHub Codespaces** 即可。
+> 不列入清单的：**阿里云 PAI-DSW**（试用额度有限）、**百度 AI Studio**（无可用交互终端，跑不了 `claude`）、**Gitpod/Ona**（已转付费、主推自带 agent）。
 
 ## 目录结构
 
@@ -119,7 +125,6 @@ bash tunnel.sh          # 前台，按提示用 GitHub 账号授权
 .devcontainer/devcontainer.json    # Codespaces 容器配置（地址、模型、自动加载 .env、写默认设置）
 .devcontainer/claude-settings.json # Claude Code 默认设置（权限/主题/强度）
 setup-claude.sh                    # 通用安装脚本（支持 PERSIST_DIR 装到持久盘）
-tunnel.sh                          # 起 VS Code 隧道，本地 VSCode 连云端
 .env.example                       # 第三方令牌模板（复制为 .env 使用）
 requirements.txt                   # Python 依赖（按需）
 ```
