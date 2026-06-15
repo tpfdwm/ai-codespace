@@ -54,3 +54,26 @@ requirements.txt                  # Python 依赖
 examples/chat_deepseek.py         # DeepSeek 调用示例
 examples/chat_anthropic.py        # Claude 调用示例
 ```
+
+## 五、在 Codespace 里使用 Claude Code（第三方 API）
+
+本仓库的 `.devcontainer` 已自动完成：安装 Node.js + Claude Code，并配好 `ANTHROPIC_BASE_URL`（第三方中转地址）。你**只需把令牌存为 Codespaces Secret**（令牌不会进仓库）：
+
+1. GitHub → 头像 → **Settings** → **Codespaces** → **Secrets** → **New secret**
+2. 名字填 `ANTHROPIC_AUTH_TOKEN`，值填你的第三方令牌，仓库范围勾选 `ai-codespace`
+3. **重新创建 Codespace**（让 devcontainer 配置和 Secret 一起生效）
+4. 等容器构建好，终端里运行：
+
+```bash
+claude
+```
+
+令牌通过 Secret 注入为环境变量，配合 devcontainer 里的 `ANTHROPIC_BASE_URL`，Claude Code 启动即走第三方 API。
+
+> 若想在**已存在**的 Codespace 里临时用（不重建），在终端手动配置：
+> ```bash
+> npm install -g @anthropic-ai/claude-code
+> export ANTHROPIC_BASE_URL="https://api-cc.freemodel.dev"
+> export ANTHROPIC_AUTH_TOKEN="你的令牌"
+> claude
+> ```
