@@ -51,27 +51,54 @@ claude
 | 模型名 `ANTHROPIC_DEFAULT_OPUS_MODEL` | 同上 | 同上 |
 | 令牌 `ANTHROPIC_AUTH_TOKEN` | **只在 `.env`**（不入库） | 重开终端或 `source .env` |
 
-## 五、在其他平台用（PAI-DSW / ModelScope / 百度 AI Studio）
+## 五、在其他平台用
 
-仓库里的 `setup-claude.sh` 是通用安装脚本，适合任何 Linux 终端环境。
+### 免费环境清单
 
-### 阿里云 PAI-DSW / 魔搭 ModelScope / 百度 AI Studio（免费 GPU，浏览器 Notebook）
+| 平台 | 算力 | 装 Claude Code | 重开实例后 | 本地 VSCode 连法 |
+|------|------|---------------|-----------|------------------|
+| **GitHub Codespaces** | CPU 免费 | devcontainer 自动 | 全部保留，直接 `claude` | Codespaces 扩展 / 浏览器 |
+| **魔搭 ModelScope** | 免费 GPU | 持久盘装(见下) | `source /mnt/workspace/start-claude.sh && claude` | `tunnel.sh` |
+| **阿里云 PAI-DSW** | GPU 试用 | 同 ModelScope(`/mnt/workspace`) | 同上 | 控制台自带 / `tunnel.sh` |
+| **腾讯 Cloud Studio** | CPU 免费 | `bash setup-claude.sh` | 工作空间持久，重开即用 | 自带 Web IDE / Remote-SSH |
+| **百度 AI Studio** | 免费 GPU | ⚠️ 无可用交互终端，跑不了 `claude` | — | 不推荐 |
 
-这几个都是**免费 GPU** 环境，适合真正跑 / 微调模型（ModelScope 免费实例其实就是 PAI-DSW 提供的；
-百度 AI Studio 是飞桨 PaddlePaddle 的免费算力平台）。开好实例后，在它的终端里：
+> 提醒：Claude Code 本身**不吃 GPU**，只想用它就挑 CPU 免费的（Codespaces / Cloud Studio）；GPU 留给真正跑 / 微调模型时再开。
+
+### 关键：持久化（ModelScope / PAI-DSW 必看）
+
+这类实例**只有数据盘 `/mnt/workspace` 重开后还在**，家目录、`~/.bashrc`、`npm -g` 装的包都会被清空。
+所以必须把东西装进 `/mnt/workspace`，否则每次重开都要重装。
+
+**① 只做一次**（首次需要 clone 仓库拿到脚本；装完仓库就可以不要了）：
+
+```bash
+git clone https://github.com/tpf308/ai-codespace.git && cd ai-codespace
+export PERSIST_DIR=/mnt/workspace          # 关键：装到持久盘
+export ANTHROPIC_AUTH_TOKEN="你的第三方令牌"
+bash setup-claude.sh
+```
+
+脚本会把 Node + Claude Code + 默认设置全装进 `/mnt/workspace`，并生成 `/mnt/workspace/start-claude.sh`（令牌已写进去）。
+
+**② 以后每次重开 notebook**，只跑这一行（不下载、不安装，瞬间进）：
+
+```bash
+source /mnt/workspace/start-claude.sh && claude
+```
+
+### 家目录持久的平台（Codespaces / Cloud Studio）
+
+这些环境家目录本身不丢，直接用默认（家目录）模式即可，新终端会自动加载：
 
 ```bash
 git clone https://github.com/tpf308/ai-codespace.git && cd ai-codespace
 export ANTHROPIC_AUTH_TOKEN="你的第三方令牌"
 bash setup-claude.sh
-source ~/.bashrc
-claude
+source ~/.bashrc && claude
 ```
 
-脚本会自动装 Node + Claude Code、写好默认设置、把第三方 API 变量（含 `IS_SANDBOX=1`）持久化到 `~/.bashrc`。
-
-> GitHub clone 慢的话，换国内镜像：`git clone https://gitclone.com/github.com/tpf308/ai-codespace.git`
-> 提醒：Claude Code 本身不吃 GPU，只想用它就选**免费 CPU 实例**；GPU 留给真正跑模型时再开。
+> GitHub clone 慢的话换国内镜像：`git clone https://gitclone.com/github.com/tpf308/ai-codespace.git`
 
 ### 在本地 VSCode 里连云端（VS Code 隧道）
 
@@ -91,7 +118,7 @@ bash tunnel.sh          # 前台，按提示用 GitHub 账号授权
 ```
 .devcontainer/devcontainer.json    # Codespaces 容器配置（地址、模型、自动加载 .env、写默认设置）
 .devcontainer/claude-settings.json # Claude Code 默认设置（权限/主题/强度）
-setup-claude.sh                    # 通用安装脚本（PAI-DSW / ModelScope / AI Studio）
+setup-claude.sh                    # 通用安装脚本（支持 PERSIST_DIR 装到持久盘）
 tunnel.sh                          # 起 VS Code 隧道，本地 VSCode 连云端
 .env.example                       # 第三方令牌模板（复制为 .env 使用）
 requirements.txt                   # Python 依赖（按需）
