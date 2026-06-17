@@ -217,28 +217,6 @@ EOF
 
 两者互不打架：直连版会清代理 + 停 mihomo；代理版有 `pgrep` 自检会自动把 mihomo 拉起。
 
-**⑥ 锁定固定节点（可选，解决偶发断流）**
-
-`自动选择` 是 url-test，按延迟自动切换，偶尔切到差节点会断流；想稳定就锁定一条：
-
-1. 在 `config.yaml` 顶部加一行开启控制接口（若没有），重启 mihomo 后查当前选中的节点名：
-   ```yaml
-   external-controller: 127.0.0.1:9090
-   ```
-   ```bash
-   curl -s http://127.0.0.1:9090/proxies/自动选择 | grep -o '"now":"[^"]*"'
-   ```
-2. 打开 `/mnt/workspace/mihomo-data/config.yaml`，把规则段最后一行 `  - "MATCH,自动选择"`
-   改成那条节点名（从 `proxies` 段一字不差复制），例如：
-   ```yaml
-     - "MATCH,🇺🇸美国01 | 合适下载使用-0.01倍"
-   ```
-3. 重启 mihomo 生效（想换回自动：改回 `MATCH,自动选择` 再重启）：
-   ```bash
-   pkill -f mihomo; sleep 1
-   nohup /mnt/workspace/mihomo -d /mnt/workspace/mihomo-data >/mnt/workspace/mihomo-data/mihomo.log 2>&1 &
-   ```
-
 > 提示：hysteria2(hy2) 走 UDP，免费机房可能不放行；连不通就在节点里换 `vless`（TCP/443）。机场节点密码、订阅 token 等同账号密码，**别写进入库文件、别截图外发**。
 
 ### 腾讯 Cloud Studio（CPU，家目录持久）
