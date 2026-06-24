@@ -10,8 +10,8 @@
     }
   },
 
-  // 容器创建后：装 Python 依赖 + 全局安装 Claude Code + 让新终端自动加载 .env + 写入 Claude Code 默认设置
-  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && npm install -g @anthropic-ai/claude-code && echo 'set -a; [ -f ${containerWorkspaceFolder}/.env ] && . ${containerWorkspaceFolder}/.env; set +a' >> ~/.bashrc && mkdir -p ~/.claude && cp ${containerWorkspaceFolder}/.devcontainer/claude-settings.json ~/.claude/settings.json",
+  // 容器创建后：装 Python 依赖 + 全局安装 Claude Code 和 Codex CLI + 让新终端自动加载 .env + 写入 Claude/Codex 默认设置
+  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && npm install -g @anthropic-ai/claude-code @openai/codex && echo 'set -a; [ -f ${containerWorkspaceFolder}/.env ] && . ${containerWorkspaceFolder}/.env; set +a' >> ~/.bashrc && mkdir -p ~/.claude && cp ${containerWorkspaceFolder}/.devcontainer/claude-settings.json ~/.claude/settings.json && mkdir -p ~/.codex && cp ${containerWorkspaceFolder}/.devcontainer/codex-config.toml ~/.codex/config.toml",
 
   // 第三方 API 的非敏感配置（地址和模型名可入库；令牌放本地 .env，不在这里）
   "containerEnv": {

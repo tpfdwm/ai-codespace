@@ -1,0 +1,18 @@
+# Codex CLI 配置：走 freemodel.dev 第三方中转（OpenAI 兼容），和 Claude 用同一家
+# 令牌不写在这里，放在仓库 .env 的 FREEMODEL_API_KEY（已被 .gitignore 忽略，新终端自动加载）
+# 重建 Codespace 时，postCreateCommand 会把本文件拷到 ~/.codex/config.toml
+model_provider = "freemodel"
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+disable_response_storage = false
+preferred_auth_method = "apikey"
+
+# 全自动：不询问审批、沙箱放开全权限
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[model_providers.freemodel]
+name = "freemodel"
+base_url = "https://api.freemodel.dev"
+wire_api = "responses"
+env_key = "FREEMODEL_API_KEY"
