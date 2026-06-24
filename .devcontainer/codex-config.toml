@@ -1,5 +1,5 @@
 # Codex CLI 配置：走 freemodel.dev 第三方中转（OpenAI 兼容），和 Claude 用同一家
-# 令牌不写在这里，放在仓库 .env 的 FREEMODEL_API_KEY（已被 .gitignore 忽略，新终端自动加载）
+# 令牌不写在这里，复用 .env 里的 ANTHROPIC_AUTH_TOKEN（和 Claude 同一个 fe_oa_ 令牌，已被 .gitignore 忽略，新终端自动加载）
 # 重建 Codespace 时，postCreateCommand 会把本文件拷到 ~/.codex/config.toml
 model_provider = "freemodel"
 model = "gpt-5.5"
@@ -15,4 +15,4 @@ sandbox_mode = "danger-full-access"
 name = "freemodel"
 base_url = "https://api.freemodel.dev"
 wire_api = "responses"
-env_key = "FREEMODEL_API_KEY"
+env_key = "ANTHROPIC_AUTH_TOKEN"
